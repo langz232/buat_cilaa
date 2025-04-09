@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Untuk Ceilaa</title>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0; padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(to top right, #1d1f27, #3e2f5b);
+      overflow: hidden;
+      color: white;
+      text-align: center;
+      height: 100vh;
+      position: relative;
+    }
+
+    h1 {
+      font-family: 'Great Vibes', cursive;
+      font-size: 3.5em;
+      margin-top: 10vh;
+      color: #ffdde1;
+      text-shadow: 0 0 20px #ff99cc;
+      animation: fadeIn 2s ease-in-out;
+    }
+
+    .content {
+      margin: 30px auto;
+      font-size: 1.2em;
+      max-width: 600px;
+      animation: fadeInUp 3s ease;
+    }
+
+    .hashtag {
+      margin-top: 20px;
+      font-weight: bold;
+      color: #ff8efb;
+      animation: glow 2s infinite alternate;
+    }
+
+    .button-love {
+      margin-top: 40px;
+      padding: 12px 30px;
+      font-size: 1em;
+      background: #ff69b4;
+      border: none;
+      border-radius: 30px;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 0 15px #ff69b4;
+      transition: transform 0.3s ease;
+    }
+
+    .button-love:hover {
+      transform: scale(1.05);
+    }
+
+    .love-message {
+      display: none;
+      font-family: 'Great Vibes', cursive;
+      font-size: 3em;
+      color: #ffdde1;
+      text-shadow: 0 0 25px #ff69b4, 0 0 50px #ff1493;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      animation: fadeInZoom 2s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from {opacity: 0;}
+      to {opacity: 1;}
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInZoom {
+      0% {
+        opacity: 0;
+        transform: scale(0.3) translate(-50%, -50%);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1) translate(-50%, -50%);
+      }
+    }
+
+    @keyframes glow {
+      from { text-shadow: 0 0 5px #ff8efb; }
+      to { text-shadow: 0 0 20px #ff00cc; }
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: -1;
+    }
+  </style>
+</head>
+<body>
+  <h1>Ceilaa...</h1>
+
+  <div class="content">
+    Dari sekian banyak kemungkinan, aku bersyukur semesta mempertemukan kita.<br><br>
+    Aku gak sempurna, tapi setiap detik bersamamu bikin aku mau jadi versi terbaik diriku sendiri.<br><br>
+    Kalau kamu tanya seberapa dalam perasaanku — jawabannya: sejauh aku berani bermimpi tentang masa depan, kamu selalu ada di dalamnya.<br><br>
+    Dan kalau kamu bersedia... aku janji, akan selalu jadi tempat paling terbaik untukmu.
+  </div>
+
+  <p class="hashtag">#Langz71</p>
+
+  <button class="button-love" onclick="showLove()">Iya, Aku Mau</button>
+
+  <div id="loveText" class="love-message">I Love You Ceilaa</div>
+
+  <audio autoplay loop>
+    <source src="https://cdn.pixabay.com/download/audio/2023/03/14/audio_95d6cfc3b3.mp3?filename=romantic-calm-piano-143068.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
+
+  <canvas id="canvas"></canvas>
+
+  <script>
+    function showLove() {
+      document.getElementById('loveText').style.display = 'block';
+    }
+
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let hearts = [];
+
+    function Heart() {
+      this.x = Math.random() * canvas.width;
+      this.y = canvas.height + Math.random() * 100;
+      this.size = Math.random() * 2 + 2;
+      this.speed = Math.random() * 1 + 0.5;
+      this.alpha = Math.random() * 0.5 + 0.5;
+    }
+
+    Heart.prototype.draw = function() {
+      ctx.beginPath();
+      ctx.moveTo(this.x, this.y);
+      ctx.bezierCurveTo(this.x + this.size, this.y - this.size,
+                        this.x + this.size * 2, this.y + this.size,
+                        this.x, this.y + this.size * 2);
+      ctx.bezierCurveTo(this.x - this.size * 2, this.y + this.size,
+                        this.x - this.size, this.y - this.size,
+                        this.x, this.y);
+      ctx.fillStyle = `rgba(255, 105, 180, ${this.alpha})`;
+      ctx.fill();
+    }
+
+    Heart.prototype.update = function() {
+      this.y -= this.speed;
+      if (this.y < -20) {
+        this.y = canvas.height + 20;
+        this.x = Math.random() * canvas.width;
+      }
+    }
+
+    function createHearts() {
+      for (let i = 0; i < 100; i++) {
+        hearts.push(new Heart());
+      }
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      hearts.forEach(heart => {
+        heart.update();
+        heart.draw();
+      });
+      requestAnimationFrame(animate);
+    }
+
+    createHearts();
+    animate();
+  </script>
+</body>
+</html>
